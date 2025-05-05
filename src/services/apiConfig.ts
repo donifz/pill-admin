@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Create axios instance with default config
 export const api = axios.create({
@@ -27,15 +27,36 @@ api.interceptors.request.use(
 // Add response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) {
+          throw new Error('No refresh token');
+        }
+
+        const response = await axios.post(`${API_URL}/auth/refresh`, {
+          refresh_token: refreshToken,
+        });
+
+        const { access_token } = response.data;
+        localStorage.setItem('token', access_token);
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        return api(originalRequest);
+      } catch (refreshError) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('refreshToken');
+        return Promise.reject(refreshError);
+      }
+    }
+
     if (error.response) {
       // Handle specific error status codes
       switch (error.response.status) {
-        case 401:
-          // Handle unauthorized access
-          localStorage.removeItem('token');
-          window.location.href = '/login';
-          break;
         case 403:
           // Handle forbidden access
           console.error('Access forbidden');
@@ -49,7 +70,7 @@ api.interceptors.response.use(
           console.error('Server error');
           break;
         default:
-          console.error('An error occurred:', error.message);
+          console.error('An error occurred:', error.response.status);
       }
     }
     return Promise.reject(error);

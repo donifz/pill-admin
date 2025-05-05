@@ -7,7 +7,15 @@ const PharmaciesPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
   const [showModal, setShowModal] = React.useState(false);
   const [editPharmacy, setEditPharmacy] = React.useState<Pharmacy | null>(null);
-  const [form, setForm] = React.useState({ name: '', address: '', phone: '', email: '' });
+  const [form, setForm] = React.useState({
+    name: '',
+    address: '',
+    contactPhone: '',
+    contactEmail: '',
+    openingHours: '9:00-18:00',
+    is24h: false,
+    location: { latitude: 0, longitude: 0 }
+  });
   const [submitting, setSubmitting] = React.useState(false);
   const [deletePharmacyId, setDeletePharmacyId] = React.useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
@@ -28,19 +36,47 @@ const PharmaciesPage: React.FC = () => {
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    if (name === 'is24h') {
+      setForm((prev) => ({ ...prev, [name]: checked }));
+    } else if (name === 'latitude' || name === 'longitude') {
+      setForm((prev) => ({
+        ...prev,
+        location: {
+          ...prev.location,
+          [name]: parseFloat(value) || 0
+        }
+      }));
+    } else {
+      setForm((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const openAddModal = () => {
     setEditPharmacy(null);
-    setForm({ name: '', address: '', phone: '', email: '' });
+    setForm({
+      name: '',
+      address: '',
+      contactPhone: '',
+      contactEmail: '',
+      openingHours: '9:00-18:00',
+      is24h: false,
+      location: { latitude: 0, longitude: 0 }
+    });
     setShowModal(true);
   };
 
   const openEditModal = (pharmacy: Pharmacy) => {
     setEditPharmacy(pharmacy);
-    setForm({ name: pharmacy.name, address: pharmacy.address, phone: pharmacy.phone, email: pharmacy.email });
+    setForm({
+      name: pharmacy.name,
+      address: pharmacy.address,
+      contactPhone: pharmacy.contactPhone,
+      contactEmail: pharmacy.contactEmail,
+      openingHours: pharmacy.openingHours,
+      is24h: pharmacy.is24h,
+      location: pharmacy.location
+    });
     setShowModal(true);
   };
 
@@ -57,7 +93,15 @@ const PharmaciesPage: React.FC = () => {
       setPharmacies(data);
       setShowModal(false);
       setEditPharmacy(null);
-      setForm({ name: '', address: '', phone: '', email: '' });
+      setForm({
+        name: '',
+        address: '',
+        contactPhone: '',
+        contactEmail: '',
+        openingHours: '9:00-18:00',
+        is24h: false,
+        location: { latitude: 0, longitude: 0 }
+      });
     } catch (err) {
       setError('Failed to save pharmacy');
       console.error(err);
@@ -106,6 +150,8 @@ const PharmaciesPage: React.FC = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">24h</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -114,8 +160,10 @@ const PharmaciesPage: React.FC = () => {
                 <tr key={pharmacy.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.address}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactPhone}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactEmail}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.openingHours}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.is24h ? 'Yes' : 'No'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
                     <button className="text-blue-600 hover:underline mr-2" onClick={() => openEditModal(pharmacy)}>Edit</button>
                     <button className="text-red-600 hover:underline" onClick={() => { setDeletePharmacyId(pharmacy.id); setShowDeleteConfirm(true); }}>Delete</button>
@@ -159,8 +207,8 @@ const PharmaciesPage: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">Phone</label>
                 <input
                   type="text"
-                  name="phone"
-                  value={form.phone}
+                  name="contactPhone"
+                  value={form.contactPhone}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   required
@@ -170,10 +218,55 @@ const PharmaciesPage: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">Email</label>
                 <input
                   type="email"
-                  name="email"
-                  value={form.email}
+                  name="contactEmail"
+                  value={form.contactEmail}
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Opening Hours</label>
+                <input
+                  type="text"
+                  name="openingHours"
+                  value={form.openingHours}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  required
+                />
+              </div>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="is24h"
+                  checked={form.is24h}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                <label className="text-sm font-medium">24 Hours Open</label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Latitude</label>
+                <input
+                  type="number"
+                  name="latitude"
+                  value={form.location.latitude}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  step="any"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Longitude</label>
+                <input
+                  type="number"
+                  name="longitude"
+                  value={form.location.longitude}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                  step="any"
                   required
                 />
               </div>

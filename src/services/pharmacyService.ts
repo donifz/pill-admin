@@ -4,9 +4,14 @@ export interface Pharmacy {
   id: string;
   name: string;
   address: string;
-  phone: string;
-  email: string;
-  // Add other pharmacy properties as needed
+  contactPhone: string;
+  contactEmail: string;
+  openingHours: string;
+  is24h: boolean;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
 }
 
 export interface PharmacyMedicine {
@@ -15,13 +20,21 @@ export interface PharmacyMedicine {
   medicineId: string;
   price: number;
   stock: number;
-  // Add other pharmacy medicine properties as needed
 }
 
 export const pharmacyService = {
   // Pharmacies
   async createPharmacy(pharmacy: Partial<Pharmacy>): Promise<Pharmacy> {
-    const response = await api.post('/pharmacies', pharmacy);
+    const response = await api.post('/pharmacies', {
+      name: pharmacy.name,
+      address: pharmacy.address,
+      contactPhone: pharmacy.contactPhone,
+      contactEmail: pharmacy.contactEmail,
+      openingHours: pharmacy.openingHours || '9:00-18:00',
+      is24h: pharmacy.is24h || false,
+      latitude: pharmacy.location?.latitude || 0,
+      longitude: pharmacy.location?.longitude || 0,
+    });
     return response.data;
   },
 
@@ -36,7 +49,16 @@ export const pharmacyService = {
   },
 
   async updatePharmacy(id: string, pharmacy: Partial<Pharmacy>): Promise<Pharmacy> {
-    const response = await api.patch(`/pharmacies/${id}`, pharmacy);
+    const response = await api.patch(`/pharmacies/${id}`, {
+      name: pharmacy.name,
+      address: pharmacy.address,
+      contactPhone: pharmacy.contactPhone,
+      contactEmail: pharmacy.contactEmail,
+      openingHours: pharmacy.openingHours,
+      is24h: pharmacy.is24h,
+      latitude: pharmacy.location?.latitude,
+      longitude: pharmacy.location?.longitude,
+    });
     return response.data;
   },
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon, 
   UserGroupIcon, 
@@ -7,6 +7,7 @@ import {
   TagIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
@@ -17,6 +18,12 @@ const navigation = [
 
 const AdminLayout: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -55,15 +62,12 @@ const AdminLayout: React.FC = () => {
           </nav>
 
           {/* Logout */}
-          <div className="p-4 border-t">
+          <div className="p-4">
             <button
-              className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 rounded-md hover:bg-gray-50 hover:text-gray-900"
-              onClick={() => {
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-              }}
+              onClick={handleLogout}
+              className="flex items-center w-full px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 rounded-md"
             >
-              <ArrowLeftOnRectangleIcon className="w-5 h-5 mr-3 text-gray-400" />
+              <ArrowLeftOnRectangleIcon className="mr-3 h-5 w-5 text-gray-400" />
               Logout
             </button>
           </div>
@@ -73,7 +77,7 @@ const AdminLayout: React.FC = () => {
       {/* Main content */}
       <div className="pl-64">
         <main className="py-6">
-          <div className="px-4 mx-auto max-w-7xl sm:px-6 md:px-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <Outlet />
           </div>
         </main>
