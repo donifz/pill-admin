@@ -60,8 +60,12 @@ export const doctorService = {
   },
 
   // Doctors
-  async createDoctor(doctor: Partial<Doctor>): Promise<Doctor> {
-    const response = await api.post('/doctors', doctor);
+  async createDoctor(doctor: FormData): Promise<Doctor> {
+    const response = await api.post('/doctors', doctor, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 
@@ -75,8 +79,12 @@ export const doctorService = {
     return response.data;
   },
 
-  async updateDoctor(id: string, doctor: Partial<Doctor>): Promise<Doctor> {
-    const response = await api.patch(`/doctors/${id}`, doctor);
+  async updateDoctor(id: string, doctor: FormData): Promise<Doctor> {
+    const response = await api.patch(`/doctors/${id}`, doctor, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
     return response.data;
   },
 

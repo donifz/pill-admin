@@ -8,8 +8,8 @@ interface DoctorForm {
   photo: File | null;
   specialization: string;
   yearsExperience: number | '';
-  rating: number | '';
-  reviewsCount: number | '';
+  rating?: number | '';
+  reviewsCount?: number | '';
   bio: string;
   languages: string[];
   consultationFee: number | '';
@@ -80,7 +80,20 @@ const DoctorsPage: React.FC = () => {
     if (name === 'photo' && (e.target as HTMLInputElement).files) {
       setForm((prev) => ({ ...prev, photo: (e.target as HTMLInputElement).files![0] }));
     } else if (type === 'number') {
-      setForm((prev) => ({ ...prev, [name]: value === '' ? '' : Number(value) }));
+      const numValue = value === '' ? '' : Number(value);
+      if (name === 'rating' && numValue !== '' && (numValue < 0 || numValue > 5)) {
+        return; // Don't update if rating is out of bounds
+      }
+      if (name === 'yearsExperience' && numValue !== '' && numValue < 0) {
+        return; // Don't update if yearsExperience is negative
+      }
+      if (name === 'reviewsCount' && numValue !== '' && numValue < 0) {
+        return; // Don't update if reviewsCount is negative
+      }
+      if (name === 'consultationFee' && numValue !== '' && numValue < 0) {
+        return; // Don't update if consultationFee is negative
+      }
+      setForm((prev) => ({ ...prev, [name]: numValue }));
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
@@ -146,23 +159,74 @@ const DoctorsPage: React.FC = () => {
       formData.append('firstName', form.firstName);
       formData.append('lastName', form.lastName);
       formData.append('categoryId', form.categoryId);
-      if (form.photo) formData.append('photo', form.photo);
+      
+      // Handle photo upload
+      if (form.photo) {
+        formData.append('photo', form.photo);
+      } else if (editDoctor?.photoUrl) {
+        // If editing and no new photo, keep the existing photoUrl
+        formData.append('photoUrl', editDoctor.photoUrl);
+      } else {
+        // If creating and no photo, set a default photo URL
+        formData.append('photoUrl', '/assets/images/default-doctor.jpg');
+      }
+      
       formData.append('specialization', form.specialization);
-      formData.append('yearsExperience', String(form.yearsExperience));
-      formData.append('rating', String(form.rating));
-      formData.append('reviewsCount', String(form.reviewsCount));
+      
+      // Handle numeric fields
+      const yearsExperience = Number(form.yearsExperience) || 0;
+      formData.append('yearsExperience', String(yearsExperience));
+      
+      // Make rating optional
+      if (form.rating !== undefined && form.rating !== '') {
+        const ratingValue = Number(form.rating);
+        if (ratingValue >= 0 && ratingValue <= 5) {
+          formData.append('rating', String(ratingValue));
+        }
+      }
+      
+      // Make reviewsCount optional
+      if (form.reviewsCount !== undefined && form.reviewsCount !== '') {
+        const reviewsCount = Number(form.reviewsCount);
+        if (reviewsCount >= 0) {
+          formData.append('reviewsCount', String(reviewsCount));
+        }
+      }
+      
       formData.append('bio', form.bio);
-      formData.append('languages', JSON.stringify(form.languages));
-      formData.append('consultationFee', String(form.consultationFee));
+      
+      // Handle languages array - append each language separately
+      if (Array.isArray(form.languages)) {
+        form.languages.forEach((lang, index) => {
+          formData.append(`languages[${index}]`, lang);
+        });
+      }
+      
+      // Handle consultation fee
+      const consultationFee = Number(form.consultationFee) || 0;
+      formData.append('consultationFee', String(consultationFee));
+      
       formData.append('contactEmail', form.contactEmail);
       formData.append('contactPhone', form.contactPhone);
       formData.append('clinicAddress', form.clinicAddress);
-      formData.append('location', JSON.stringify({ latitude: form.latitude, longitude: form.longitude }));
-      formData.append('availableSlots', JSON.stringify(form.availableSlots));
+      
+      // Handle location object - append each property separately
+      const latitude = Number(form.latitude) || 0;
+      const longitude = Number(form.longitude) || 0;
+      formData.append('location[latitude]', String(latitude));
+      formData.append('location[longitude]', String(longitude));
+      
+      // Handle available slots array - append each slot separately
+      if (Array.isArray(form.availableSlots)) {
+        form.availableSlots.forEach((slot, index) => {
+          formData.append(`availableSlots[${index}]`, new Date(slot).toISOString());
+        });
+      }
+
       if (editDoctor) {
-        await doctorService.updateDoctor(editDoctor.id, formData as unknown as Partial<Doctor>);
+        await doctorService.updateDoctor(editDoctor.id, formData);
       } else {
-        await doctorService.createDoctor(formData as unknown as Partial<Doctor>);
+        await doctorService.createDoctor(formData);
       }
       const doctorsData = await doctorService.getDoctors();
       setDoctors(Array.isArray(doctorsData) ? doctorsData : []);
@@ -285,11 +349,11 @@ const DoctorsPage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Rating</label>
-                <input type="number" name="rating" value={form.rating} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} max={5} step={0.1} required />
+                <input type="number" name="rating" value={form.rating} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} max={5} step={0.1} />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Reviews Count</label>
-                <input type="number" name="reviewsCount" value={form.reviewsCount} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} required />
+                <input type="number" name="reviewsCount" value={form.reviewsCount} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Bio</label>
