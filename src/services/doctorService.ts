@@ -1,27 +1,7 @@
 import { api } from './apiConfig';
-import { DoctorCategory } from '../types/doctor';
+import { DoctorCategory, Doctor } from '../types/doctor';
 
-export interface Doctor {
-  id: string;
-  firstName: string;
-  lastName: string;
-  categoryId: string;
-  category?: DoctorCategory;
-  photoUrl?: string;
-  specialization: string;
-  yearsExperience: number;
-  rating: number;
-  reviewsCount: number;
-  bio: string;
-  languages: string[];
-  consultationFee: number;
-  contactEmail: string;
-  contactPhone: string;
-  clinicAddress: string;
-  location: { latitude: number; longitude: number };
-  availableSlots?: string[];
-  // Add other doctor properties as needed
-}
+export type { Doctor }; // Re-export the Doctor type from types/doctor.ts
 
 class DoctorService {
   async getCategories(): Promise<DoctorCategory[]> {
