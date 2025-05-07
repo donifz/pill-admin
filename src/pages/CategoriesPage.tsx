@@ -1,5 +1,7 @@
 import React from 'react';
-import { doctorService, DoctorCategory } from '../services/doctorService';
+import { doctorService } from '../services/doctorService';
+import { DoctorCategory } from '../types/doctor';
+import { AxiosResponse } from 'axios';
 
 const CategoriesPage: React.FC = () => {
   const [categories, setCategories] = React.useState<DoctorCategory[]>([]);

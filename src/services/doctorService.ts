@@ -1,4 +1,5 @@
 import { api } from './apiConfig';
+import { DoctorCategory } from '../types/doctor';
 
 export interface Doctor {
   id: string;
@@ -22,73 +23,54 @@ export interface Doctor {
   // Add other doctor properties as needed
 }
 
-export interface DoctorCategory {
-  id: string;
-  name: string;
-  iconUrl?: string;
-  description?: string;
-  parentId?: string;
-}
+class DoctorService {
+  async getCategories(): Promise<DoctorCategory[]> {
+    const response = await api.get<DoctorCategory[]>('/doctors/categories');
+    return response.data;
+  }
 
-export const doctorService = {
-  // Doctor Categories
-  async createCategory(category: Partial<DoctorCategory>, icon?: File): Promise<DoctorCategory> {
+  async createCategory(category: Partial<DoctorCategory>, icon?: File) {
     const formData = new FormData();
-    if (category.name) {
-      formData.append('name', category.name);
-    }
+    Object.entries(category).forEach(([key, value]) => {
+      formData.append(key, value);
+    });
     if (icon) {
       formData.append('icon', icon);
     }
-    
-    const response = await api.post('/doctors/categories', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    return api.post<DoctorCategory>('/doctors/categories', formData);
+  }
+
+  async updateCategory(id: string, category: Partial<DoctorCategory>, icon?: File) {
+    const formData = new FormData();
+    Object.entries(category).forEach(([key, value]) => {
+      formData.append(key, value);
     });
-    return response.data;
-  },
+    if (icon) {
+      formData.append('icon', icon);
+    }
+    return api.patch<DoctorCategory>(`/doctors/categories/${id}`, formData);
+  }
 
-  async getCategories(): Promise<DoctorCategory[]> {
-    const response = await api.get('/doctors/categories');
-    return response.data;
-  },
+  async deleteCategory(id: string) {
+    return api.delete(`/doctors/categories/${id}`);
+  }
 
-  async getCategoryById(id: string): Promise<DoctorCategory> {
-    const response = await api.get(`/doctors/categories/${id}`);
-    return response.data;
-  },
-
-  // Doctors
-  async createDoctor(doctor: FormData): Promise<Doctor> {
-    const response = await api.post('/doctors', doctor, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
+  async createDoctorFromUser(userId: string, doctorData: any) {
+    return api.post(`/doctors/users/${userId}`, doctorData);
+  }
 
   async getDoctors(): Promise<Doctor[]> {
-    const response = await api.get('/doctors');
+    const response = await api.get<{ items: Doctor[], total: number }>('/doctors');
     return response.data.items;
-  },
+  }
 
-  async getDoctorsByCategory(categoryId: string): Promise<Doctor[]> {
-    const response = await api.get(`/doctors/category/${categoryId}`);
-    return response.data;
-  },
+  async getDoctor(id: string) {
+    return api.get(`/doctors/${id}`);
+  }
 
-  async updateDoctor(id: string, doctor: FormData): Promise<Doctor> {
-    const response = await api.patch(`/doctors/${id}`, doctor, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  },
+  async deleteDoctor(id: string) {
+    return api.delete(`/doctors/${id}`);
+  }
+}
 
-  async deleteDoctor(id: string): Promise<void> {
-    await api.delete(`/doctors/${id}`);
-  },
-}; 
+export const doctorService = new DoctorService(); 

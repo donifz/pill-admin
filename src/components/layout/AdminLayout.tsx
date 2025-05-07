@@ -5,12 +5,14 @@ import {
   UserGroupIcon, 
   BuildingStorefrontIcon, 
   TagIcon,
-  ArrowLeftOnRectangleIcon
+  ArrowLeftOnRectangleIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/admin', icon: HomeIcon },
+  { name: 'Users', href: '/admin/users', icon: UsersIcon },
   { name: 'Doctors', href: '/admin/doctors', icon: UserGroupIcon },
   { name: 'Pharmacies', href: '/admin/pharmacies', icon: BuildingStorefrontIcon },
   { name: 'Categories', href: '/admin/categories', icon: TagIcon },

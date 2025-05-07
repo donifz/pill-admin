@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import DoctorsPage from './pages/DoctorsPage';
 import PharmaciesPage from './pages/PharmaciesPage';
 import CategoriesPage from './pages/CategoriesPage';
+import UsersPage from './pages/UsersPage';
 
 const App: React.FC = () => {
   return (
@@ -29,6 +30,7 @@ const App: React.FC = () => {
             <Route path="doctors" element={<DoctorsPage />} />
             <Route path="pharmacies" element={<PharmaciesPage />} />
             <Route path="categories" element={<CategoriesPage />} />
+            <Route path="users" element={<UsersPage />} />
           </Route>
           <Route path="/" element={<Navigate to="/admin" replace />} />
         </Routes>

@@ -62,7 +62,7 @@ const DoctorsPage: React.FC = () => {
           doctorService.getDoctors(),
           doctorService.getCategories(),
         ]);
-        setDoctors(Array.isArray(doctorsData) ? doctorsData : []);
+        setDoctors(doctorsData);
         setCategories(categoriesData);
       } catch (err) {
         setError('Failed to fetch doctors or categories');
