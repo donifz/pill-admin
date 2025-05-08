@@ -1,5 +1,6 @@
 import React from 'react';
 import { doctorService, Doctor, DoctorCategory } from '../services/doctorService';
+import { useNavigate } from 'react-router-dom';
 
 interface DoctorForm {
   firstName: string;
@@ -54,6 +55,7 @@ const DoctorsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [languageInput, setLanguageInput] = React.useState('');
   const [slotInput, setSlotInput] = React.useState('');
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const fetchData = async () => {
@@ -132,7 +134,7 @@ const DoctorsPage: React.FC = () => {
     setForm({
       firstName: doctor.firstName || '',
       lastName: doctor.lastName || '',
-      categoryId: doctor.categoryId || '',
+      categoryId: doctor.category?.id || '',
       photo: null,
       specialization: doctor.specialization || '',
       yearsExperience: doctor.yearsExperience || '',
@@ -156,86 +158,30 @@ const DoctorsPage: React.FC = () => {
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('firstName', form.firstName);
-      formData.append('lastName', form.lastName);
-      formData.append('categoryId', form.categoryId);
-      
-      // Handle photo upload
-      if (form.photo) {
-        formData.append('photo', form.photo);
-      } else if (editDoctor?.photoUrl) {
-        // If editing and no new photo, keep the existing photoUrl
-        formData.append('photoUrl', editDoctor.photoUrl);
-      } else {
-        // If creating and no photo, set a default photo URL
-        formData.append('photoUrl', '/assets/images/default-doctor.jpg');
-      }
-      
-      formData.append('specialization', form.specialization);
-      
-      // Handle numeric fields
-      const yearsExperience = Number(form.yearsExperience) || 0;
-      formData.append('yearsExperience', String(yearsExperience));
-      
-      // Make rating optional
-      if (form.rating !== undefined && form.rating !== '') {
-        const ratingValue = Number(form.rating);
-        if (ratingValue >= 0 && ratingValue <= 5) {
-          formData.append('rating', String(ratingValue));
+      Object.entries(form).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          formData.append(key, value.toString());
         }
-      }
-      
-      // Make reviewsCount optional
-      if (form.reviewsCount !== undefined && form.reviewsCount !== '') {
-        const reviewsCount = Number(form.reviewsCount);
-        if (reviewsCount >= 0) {
-          formData.append('reviewsCount', String(reviewsCount));
-        }
-      }
-      
-      formData.append('bio', form.bio);
-      
-      // Handle languages array - append each language separately
-      if (Array.isArray(form.languages)) {
-        form.languages.forEach((lang, index) => {
-          formData.append(`languages[${index}]`, lang);
-        });
-      }
-      
-      // Handle consultation fee
-      const consultationFee = Number(form.consultationFee) || 0;
-      formData.append('consultationFee', String(consultationFee));
-      
-      formData.append('contactEmail', form.contactEmail);
-      formData.append('contactPhone', form.contactPhone);
-      formData.append('clinicAddress', form.clinicAddress);
-      
-      // Handle location object - append each property separately
-      const latitude = Number(form.latitude) || 0;
-      const longitude = Number(form.longitude) || 0;
-      formData.append('location[latitude]', String(latitude));
-      formData.append('location[longitude]', String(longitude));
-      
-      // Handle available slots array - append each slot separately
-      if (Array.isArray(form.availableSlots)) {
-        form.availableSlots.forEach((slot, index) => {
-          formData.append(`availableSlots[${index}]`, new Date(slot).toISOString());
-        });
-      }
+      });
 
       if (editDoctor) {
         await doctorService.updateDoctor(editDoctor.id, formData);
       } else {
         await doctorService.createDoctor(formData);
       }
-      const doctorsData = await doctorService.getDoctors();
-      setDoctors(Array.isArray(doctorsData) ? doctorsData : []);
+
+      const [doctorsData, categoriesData] = await Promise.all([
+        doctorService.getDoctors(),
+        doctorService.getCategories(),
+      ]);
+      setDoctors(doctorsData);
+      setCategories(categoriesData);
       setShowModal(false);
       setEditDoctor(null);
       setForm(initialForm);
-    } catch (err) {
+    } catch (error) {
       setError('Failed to save doctor');
-      console.error(err);
+      console.error(error);
     } finally {
       setSubmitting(false);
     }
@@ -302,6 +248,7 @@ const DoctorsPage: React.FC = () => {
                   <td className="px-2 py-4 whitespace-nowrap">{doctor.contactEmail}<br />{doctor.contactPhone}</td>
                   <td className="px-2 py-4 whitespace-nowrap">{doctor.clinicAddress}</td>
                   <td className="px-2 py-4 whitespace-nowrap text-right">
+                    <button className="text-blue-600 hover:underline mr-2" onClick={() => navigate(`/admin/doctors/${doctor.id}`)}>View Details</button>
                     <button className="text-blue-600 hover:underline mr-2" onClick={() => openEditModal(doctor)}>Edit</button>
                     <button className="text-red-600 hover:underline" onClick={() => { setDeleteDoctorId(doctor.id); setShowDeleteConfirm(true); }}>Delete</button>
                   </td>

@@ -7,6 +7,7 @@ import LoginPage from './pages/LoginPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import Dashboard from './pages/Dashboard';
 import DoctorsPage from './pages/DoctorsPage';
+import DoctorDetailsPage from './pages/DoctorDetailsPage';
 import PharmaciesPage from './pages/PharmaciesPage';
 import CategoriesPage from './pages/CategoriesPage';
 import UsersPage from './pages/UsersPage';
@@ -28,6 +29,7 @@ const App: React.FC = () => {
           >
             <Route index element={<Dashboard />} />
             <Route path="doctors" element={<DoctorsPage />} />
+            <Route path="doctors/:id" element={<DoctorDetailsPage />} />
             <Route path="pharmacies" element={<PharmaciesPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="users" element={<UsersPage />} />

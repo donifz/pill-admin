@@ -1,7 +1,7 @@
 import { api } from './apiConfig';
 import { DoctorCategory, Doctor } from '../types/doctor';
 
-export type { Doctor }; // Re-export the Doctor type from types/doctor.ts
+export type { Doctor, DoctorCategory }; // Re-export both types
 
 class DoctorService {
   async getCategories(): Promise<DoctorCategory[]> {
@@ -44,8 +44,24 @@ class DoctorService {
     return response.data.items;
   }
 
-  async getDoctor(id: string) {
-    return api.get(`/doctors/${id}`);
+  async getDoctor(id: string): Promise<Doctor> {
+    try {
+      console.log('Fetching doctor with ID:', id);
+      const response = await api.get<Doctor>(`/doctors/${id}`);
+      console.log('Doctor API response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Error in getDoctor:', error);
+      throw error;
+    }
+  }
+
+  async createDoctor(doctorData: any) {
+    return api.post<Doctor>('/doctors', doctorData);
+  }
+
+  async updateDoctor(id: string, doctorData: any) {
+    return api.patch<Doctor>(`/doctors/${id}`, doctorData);
   }
 
   async deleteDoctor(id: string) {
