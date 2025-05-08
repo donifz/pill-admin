@@ -10,6 +10,7 @@ const PharmaciesPage: React.FC = () => {
   const [form, setForm] = React.useState({
     name: '',
     address: '',
+    city: '',
     contactPhone: '',
     contactEmail: '',
     openingHours: '9:00-18:00',
@@ -57,6 +58,7 @@ const PharmaciesPage: React.FC = () => {
     setForm({
       name: '',
       address: '',
+      city: '',
       contactPhone: '',
       contactEmail: '',
       openingHours: '9:00-18:00',
@@ -71,6 +73,7 @@ const PharmaciesPage: React.FC = () => {
     setForm({
       name: pharmacy.name,
       address: pharmacy.address,
+      city: pharmacy.city || '',
       contactPhone: pharmacy.contactPhone,
       contactEmail: pharmacy.contactEmail,
       openingHours: pharmacy.openingHours,
@@ -96,6 +99,7 @@ const PharmaciesPage: React.FC = () => {
       setForm({
         name: '',
         address: '',
+        city: '',
         contactPhone: '',
         contactEmail: '',
         openingHours: '9:00-18:00',
@@ -148,6 +152,7 @@ const PharmaciesPage: React.FC = () => {
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
@@ -160,6 +165,7 @@ const PharmaciesPage: React.FC = () => {
                 <tr key={pharmacy.id}>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.address}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.city || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactPhone}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactEmail}</td>
                   <td className="px-6 py-4 whitespace-nowrap">{pharmacy.openingHours}</td>
@@ -201,6 +207,16 @@ const PharmaciesPage: React.FC = () => {
                   onChange={handleInputChange}
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={form.city}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
                 />
               </div>
               <div>

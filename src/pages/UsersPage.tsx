@@ -27,7 +27,8 @@ const UsersPage: React.FC = () => {
     name: '',
     email: '',
     password: '',
-    role: 'user' as const,
+    role: Role.USER,
+    city: '',
   });
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isAssignDoctorModalOpen, setIsAssignDoctorModalOpen] = useState(false);
@@ -61,7 +62,8 @@ const UsersPage: React.FC = () => {
       name: '',
       email: '',
       password: '',
-      role: 'user',
+      role: Role.USER,
+      city: '',
     });
     setEditUser(null);
   };
@@ -77,6 +79,7 @@ const UsersPage: React.FC = () => {
       email: user.email,
       password: '',
       role: user.role,
+      city: user.city || '',
     });
     setEditUser(user);
     setShowModal(true);
@@ -141,6 +144,7 @@ const UsersPage: React.FC = () => {
             <Tr>
               <Th>Name</Th>
               <Th>Email</Th>
+              <Th>City</Th>
               <Th>Role</Th>
               <Th>Actions</Th>
             </Tr>
@@ -150,6 +154,7 @@ const UsersPage: React.FC = () => {
               <Tr key={user.id}>
                 <Td>{user.name}</Td>
                 <Td>{user.email}</Td>
+                <Td>{user.city || '-'}</Td>
                 <Td>
                   <Badge
                     colorScheme={
@@ -209,6 +214,16 @@ const UsersPage: React.FC = () => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={form.city}
+                  onChange={handleInputChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1">Password</label>
                 <input
                   type="password"
@@ -228,9 +243,9 @@ const UsersPage: React.FC = () => {
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   required
                 >
-                  <option value="user">User</option>
-                  <option value="doctor">Doctor</option>
-                  <option value="admin">Admin</option>
+                  <option value={Role.USER}>User</option>
+                  <option value={Role.DOCTOR}>Doctor</option>
+                  <option value={Role.ADMIN}>Admin</option>
                 </select>
               </div>
               <div className="flex justify-end space-x-2">

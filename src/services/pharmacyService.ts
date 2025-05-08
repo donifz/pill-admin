@@ -4,6 +4,7 @@ export interface Pharmacy {
   id: string;
   name: string;
   address: string;
+  city?: string;
   contactPhone: string;
   contactEmail: string;
   openingHours: string;
@@ -28,6 +29,7 @@ export const pharmacyService = {
     const response = await api.post('/pharmacies', {
       name: pharmacy.name,
       address: pharmacy.address,
+      city: pharmacy.city,
       contactPhone: pharmacy.contactPhone,
       contactEmail: pharmacy.contactEmail,
       openingHours: pharmacy.openingHours || '9:00-18:00',
@@ -52,6 +54,7 @@ export const pharmacyService = {
     const response = await api.patch(`/pharmacies/${id}`, {
       name: pharmacy.name,
       address: pharmacy.address,
+      city: pharmacy.city,
       contactPhone: pharmacy.contactPhone,
       contactEmail: pharmacy.contactEmail,
       openingHours: pharmacy.openingHours,

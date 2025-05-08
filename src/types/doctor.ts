@@ -19,6 +19,7 @@ export interface Doctor {
   contactEmail: string;
   contactPhone: string;
   clinicAddress: string;
+  city?: string;
   location: {
     latitude: number;
     longitude: number;
@@ -43,6 +44,7 @@ export interface CreateDoctorDto {
   contactEmail: string;
   contactPhone: string;
   clinicAddress: string;
+  city?: string;
   location: {
     latitude: number;
     longitude: number;

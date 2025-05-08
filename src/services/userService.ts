@@ -1,10 +1,12 @@
 import { api } from './apiConfig';
+import { Role } from '../types/user';
 
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'user' | 'doctor';
+  role: Role;
+  city?: string;
   fcmToken?: string;
   createdAt: string;
   updatedAt: string;

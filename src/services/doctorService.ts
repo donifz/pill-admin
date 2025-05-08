@@ -1,11 +1,16 @@
 import { api } from './apiConfig';
-import { DoctorCategory, Doctor } from '../types/doctor';
+import { DoctorCategory, Doctor, CreateDoctorDto } from '../types/doctor';
 
 export type { Doctor, DoctorCategory }; // Re-export both types
 
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+}
+
 class DoctorService {
   async getCategories(): Promise<DoctorCategory[]> {
-    const response = await api.get<DoctorCategory[]>('/doctors/categories');
+    const response = await api.get('/doctors/categories');
     return response.data;
   }
 
@@ -17,7 +22,11 @@ class DoctorService {
     if (icon) {
       formData.append('icon', icon);
     }
-    return api.post<DoctorCategory>('/doctors/categories', formData);
+    return api.post('/doctors/categories', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   }
 
   async updateCategory(id: string, category: Partial<DoctorCategory>, icon?: File) {
@@ -28,7 +37,11 @@ class DoctorService {
     if (icon) {
       formData.append('icon', icon);
     }
-    return api.patch<DoctorCategory>(`/doctors/categories/${id}`, formData);
+    return api.patch(`/doctors/categories/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
   }
 
   async deleteCategory(id: string) {
@@ -40,32 +53,35 @@ class DoctorService {
   }
 
   async getDoctors(): Promise<Doctor[]> {
-    const response = await api.get<{ items: Doctor[], total: number }>('/doctors');
+    const response = await api.get<PaginatedResponse<Doctor>>('/doctors');
     return response.data.items;
   }
 
   async getDoctor(id: string): Promise<Doctor> {
-    try {
-      console.log('Fetching doctor with ID:', id);
-      const response = await api.get<Doctor>(`/doctors/${id}`);
-      console.log('Doctor API response:', response);
-      return response.data;
-    } catch (error) {
-      console.error('Error in getDoctor:', error);
-      throw error;
-    }
+    const response = await api.get(`/doctors/${id}`);
+    return response.data;
   }
 
-  async createDoctor(doctorData: any) {
-    return api.post<Doctor>('/doctors', doctorData);
+  async createDoctor(formData: FormData): Promise<Doctor> {
+    const response = await api.post('/doctors', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 
-  async updateDoctor(id: string, doctorData: any) {
-    return api.patch<Doctor>(`/doctors/${id}`, doctorData);
+  async updateDoctor(id: string, formData: FormData): Promise<Doctor> {
+    const response = await api.patch(`/doctors/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
   }
 
-  async deleteDoctor(id: string) {
-    return api.delete(`/doctors/${id}`);
+  async deleteDoctor(id: string): Promise<void> {
+    await api.delete(`/doctors/${id}`);
   }
 }
 

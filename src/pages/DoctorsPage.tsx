@@ -17,6 +17,7 @@ interface DoctorForm {
   contactEmail: string;
   contactPhone: string;
   clinicAddress: string;
+  city: string;
   latitude: number | '';
   longitude: number | '';
   availableSlots: string[];
@@ -37,6 +38,7 @@ const initialForm: DoctorForm = {
   contactEmail: '',
   contactPhone: '',
   clinicAddress: '',
+  city: '',
   latitude: '',
   longitude: '',
   availableSlots: [],
@@ -146,6 +148,7 @@ const DoctorsPage: React.FC = () => {
       contactEmail: doctor.contactEmail || '',
       contactPhone: doctor.contactPhone || '',
       clinicAddress: doctor.clinicAddress || '',
+      city: doctor.city || '',
       latitude: doctor.location?.latitude || '',
       longitude: doctor.location?.longitude || '',
       availableSlots: (doctor.availableSlots || []).map((d: string | Date) => d.toString()),
@@ -158,11 +161,38 @@ const DoctorsPage: React.FC = () => {
     setSubmitting(true);
     try {
       const formData = new FormData();
-      Object.entries(form).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value.toString());
-        }
+      
+      // Add all form fields to FormData
+      formData.append('firstName', form.firstName);
+      formData.append('lastName', form.lastName);
+      formData.append('categoryId', form.categoryId);
+      formData.append('specialization', form.specialization);
+      formData.append('yearsExperience', form.yearsExperience.toString());
+      formData.append('bio', form.bio);
+      formData.append('consultationFee', form.consultationFee.toString());
+      formData.append('contactEmail', form.contactEmail);
+      formData.append('contactPhone', form.contactPhone);
+      formData.append('clinicAddress', form.clinicAddress);
+      formData.append('city', form.city);
+      
+      // Add location as separate fields
+      formData.append('location[latitude]', form.latitude.toString());
+      formData.append('location[longitude]', form.longitude.toString());
+      
+      // Add languages as array
+      form.languages.forEach((lang, index) => {
+        formData.append(`languages[${index}]`, lang);
       });
+      
+      // Add available slots as array
+      form.availableSlots.forEach((slot, index) => {
+        formData.append(`availableSlots[${index}]`, slot);
+      });
+      
+      // Add photo if it exists
+      if (form.photo) {
+        formData.append('photo', form.photo);
+      }
 
       if (editDoctor) {
         await doctorService.updateDoctor(editDoctor.id, formData);
@@ -223,16 +253,17 @@ const DoctorsPage: React.FC = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Languages</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clinic</th>
-                <th className="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialization</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Experience</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Languages</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">City</th>
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -247,6 +278,7 @@ const DoctorsPage: React.FC = () => {
                   <td className="px-2 py-4 whitespace-nowrap">${doctor.consultationFee}</td>
                   <td className="px-2 py-4 whitespace-nowrap">{doctor.contactEmail}<br />{doctor.contactPhone}</td>
                   <td className="px-2 py-4 whitespace-nowrap">{doctor.clinicAddress}</td>
+                  <td className="px-2 py-4 whitespace-nowrap">{doctor.city || '-'}</td>
                   <td className="px-2 py-4 whitespace-nowrap text-right">
                     <button className="text-blue-600 hover:underline mr-2" onClick={() => navigate(`/admin/doctors/${doctor.id}`)}>View Details</button>
                     <button className="text-blue-600 hover:underline mr-2" onClick={() => openEditModal(doctor)}>Edit</button>
@@ -294,14 +326,18 @@ const DoctorsPage: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">Years Experience</label>
                 <input type="number" name="yearsExperience" value={form.yearsExperience} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} required />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Rating</label>
-                <input type="number" name="rating" value={form.rating} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} max={5} step={0.1} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Reviews Count</label>
-                <input type="number" name="reviewsCount" value={form.reviewsCount} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} />
-              </div>
+              {editDoctor && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Rating</label>
+                    <input type="number" name="rating" value={form.rating} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} max={5} step={0.1} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Reviews Count</label>
+                    <input type="number" name="reviewsCount" value={form.reviewsCount} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" min={0} readOnly />
+                  </div>
+                </>
+              )}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Bio</label>
                 <textarea name="bio" value={form.bio} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" required />
@@ -338,12 +374,16 @@ const DoctorsPage: React.FC = () => {
                 <input type="text" name="clinicAddress" value={form.clinicAddress} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" required />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1">City</label>
+                <input type="text" name="city" value={form.city} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1">Latitude</label>
-                <input type="number" name="latitude" value={form.latitude} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" required />
+                <input type="number" name="latitude" value={form.latitude} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" step="any" required />
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">Longitude</label>
-                <input type="number" name="longitude" value={form.longitude} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" required />
+                <input type="number" name="longitude" value={form.longitude} onChange={handleInputChange} className="w-full border border-gray-300 rounded px-3 py-2" step="any" required />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium mb-1">Available Slots</label>
