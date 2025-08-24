@@ -1,7 +1,7 @@
 export enum Role {
-  ADMIN = 'ADMIN',
-  USER = 'USER',
-  DOCTOR = 'DOCTOR',
+  ADMIN = 'admin',
+  USER = 'user',
+  DOCTOR = 'doctor',
 }
 
 export interface User {

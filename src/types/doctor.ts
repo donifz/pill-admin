@@ -33,15 +33,15 @@ export interface Doctor {
 }
 
 export interface CreateDoctorDto {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   specialization: string;
   yearsExperience: number;
   photoUrl: string;
   bio: string;
   languages: string[];
   consultationFee: number;
-  contactEmail: string;
+  contactEmail?: string;
   contactPhone: string;
   clinicAddress: string;
   city?: string;
@@ -51,4 +51,5 @@ export interface CreateDoctorDto {
   };
   availableSlots?: Date[];
   categoryId: string;
+  userId?: string;
 } 

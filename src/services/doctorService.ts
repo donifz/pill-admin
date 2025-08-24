@@ -8,6 +8,14 @@ interface PaginatedResponse<T> {
   total: number;
 }
 
+interface PaginationParams {
+  page?: number;
+  limit?: number;
+  name?: string;
+  specialization?: string;
+  countryId?: string;
+}
+
 class DoctorService {
   async getCategories(): Promise<DoctorCategory[]> {
     const response = await api.get('/doctors/categories');
@@ -48,11 +56,21 @@ class DoctorService {
     return api.delete(`/doctors/categories/${id}`);
   }
 
+  async getUserDataForDoctor(userId: string) {
+    const response = await api.get(`/doctors/users/${userId}/data`);
+    return response.data;
+  }
+
   async createDoctorFromUser(userId: string, doctorData: any) {
     return api.post(`/doctors/users/${userId}`, doctorData);
   }
 
-  async getDoctors(): Promise<Doctor[]> {
+  async getDoctors(params?: PaginationParams): Promise<PaginatedResponse<Doctor>> {
+    const response = await api.get<PaginatedResponse<Doctor>>('/doctors', { params });
+    return response.data;
+  }
+
+  async getAllDoctors(): Promise<Doctor[]> {
     const response = await api.get<PaginatedResponse<Doctor>>('/doctors');
     return response.data.items;
   }

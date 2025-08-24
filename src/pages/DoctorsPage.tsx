@@ -1,6 +1,7 @@
 import React from 'react';
 import { doctorService, Doctor, DoctorCategory } from '../services/doctorService';
 import { useNavigate } from 'react-router-dom';
+import Pagination from '../components/common/Pagination';
 
 interface DoctorForm {
   firstName: string;
@@ -57,16 +58,34 @@ const DoctorsPage: React.FC = () => {
   const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false);
   const [languageInput, setLanguageInput] = React.useState('');
   const [slotInput, setSlotInput] = React.useState('');
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [itemsPerPage, setItemsPerPage] = React.useState(10);
+  const [totalItems, setTotalItems] = React.useState(0);
+  const [totalPages, setTotalPages] = React.useState(0);
+  
+  // Search state
+  const [searchName, setSearchName] = React.useState('');
+  const [searchSpecialization, setSearchSpecialization] = React.useState('');
+  
   const navigate = useNavigate();
 
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const [doctorsData, categoriesData] = await Promise.all([
-          doctorService.getDoctors(),
+        const [doctorsResponse, categoriesData] = await Promise.all([
+          doctorService.getDoctors({
+            page: currentPage,
+            limit: itemsPerPage,
+            name: searchName || undefined,
+            specialization: searchSpecialization || undefined,
+          }),
           doctorService.getCategories(),
         ]);
-        setDoctors(doctorsData);
+        setDoctors(doctorsResponse.items);
+        setTotalItems(doctorsResponse.total);
+        setTotalPages(Math.ceil(doctorsResponse.total / itemsPerPage));
         setCategories(categoriesData);
       } catch (err) {
         setError('Failed to fetch doctors or categories');
@@ -77,7 +96,7 @@ const DoctorsPage: React.FC = () => {
       }
     };
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage, searchName, searchSpecialization]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -200,12 +219,15 @@ const DoctorsPage: React.FC = () => {
         await doctorService.createDoctor(formData);
       }
 
-      const [doctorsData, categoriesData] = await Promise.all([
-        doctorService.getDoctors(),
-        doctorService.getCategories(),
-      ]);
-      setDoctors(doctorsData);
-      setCategories(categoriesData);
+      // Refresh the current page data
+      const doctorsResponse = await doctorService.getDoctors({
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+      setDoctors(doctorsResponse.items);
+      setTotalItems(doctorsResponse.total);
+      setTotalPages(Math.ceil(doctorsResponse.total / itemsPerPage));
+      
       setShowModal(false);
       setEditDoctor(null);
       setForm(initialForm);
@@ -222,7 +244,16 @@ const DoctorsPage: React.FC = () => {
     setSubmitting(true);
     try {
       await doctorService.deleteDoctor(deleteDoctorId);
-      setDoctors(doctors.filter((doc) => doc.id !== deleteDoctorId));
+      
+      // Refresh the current page data
+      const doctorsResponse = await doctorService.getDoctors({
+        page: currentPage,
+        limit: itemsPerPage,
+      });
+      setDoctors(doctorsResponse.items);
+      setTotalItems(doctorsResponse.total);
+      setTotalPages(Math.ceil(doctorsResponse.total / itemsPerPage));
+      
       setShowDeleteConfirm(false);
       setDeleteDoctorId(null);
     } catch (err) {
@@ -231,6 +262,25 @@ const DoctorsPage: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (limit: number) => {
+    setItemsPerPage(limit);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
+
+  const handleSearch = () => {
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleClearSearch = () => {
+    setSearchName('');
+    setSearchSpecialization('');
+    setCurrentPage(1);
   };
 
   return (
@@ -243,6 +293,46 @@ const DoctorsPage: React.FC = () => {
         >
           Add Doctor
         </button>
+      </div>
+
+      {/* Search Form */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
+            <input
+              type="text"
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              placeholder="Enter doctor name..."
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Search by Specialization</label>
+            <input
+              type="text"
+              value={searchSpecialization}
+              onChange={(e) => setSearchSpecialization(e.target.value)}
+              placeholder="Enter specialization..."
+              className="w-full border border-gray-300 rounded px-3 py-2"
+            />
+          </div>
+          <div className="flex items-end space-x-2">
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            >
+              Search
+            </button>
+            <button
+              onClick={handleClearSearch}
+              className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
       </div>
       {loading ? (
         <div>Loading...</div>
@@ -288,6 +378,18 @@ const DoctorsPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+          
+          {/* Pagination */}
+          {totalPages > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          )}
         </div>
       )}
 

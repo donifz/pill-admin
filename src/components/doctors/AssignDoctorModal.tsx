@@ -17,16 +17,13 @@ import {
   NumberInputField,
   VStack,
   useToast,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
   Box,
   Text,
+  Badge,
+  HStack,
 } from '@chakra-ui/react';
 import { doctorService } from '../../services/doctorService';
-import { Doctor, DoctorCategory } from '../../types/doctor';
+import { DoctorCategory } from '../../types/doctor';
 
 interface AssignDoctorModalProps {
   isOpen: boolean;
@@ -43,19 +40,16 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
 }) => {
   const toast = useToast();
   const [categories, setCategories] = useState<DoctorCategory[]>([]);
-  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [userData, setUserData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [languageInput, setLanguageInput] = useState('');
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
     specialization: '',
     yearsExperience: 0,
     photoUrl: '',
     bio: '',
     languages: [] as string[],
     consultationFee: 0,
-    contactEmail: '',
     contactPhone: '',
     clinicAddress: '',
     location: {
@@ -63,12 +57,15 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
       longitude: 0,
     },
     categoryId: '',
+    availableSlots: [] as Date[],
   });
 
   useEffect(() => {
-    fetchCategories();
-    fetchDoctors();
-  }, []);
+    if (isOpen && userId) {
+      fetchCategories();
+      fetchUserData();
+    }
+  }, [isOpen, userId]);
 
   const fetchCategories = async () => {
     try {
@@ -86,14 +83,14 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
     }
   };
 
-  const fetchDoctors = async () => {
+  const fetchUserData = async () => {
     try {
-      const response = await doctorService.getDoctors();
-      setDoctors(response);
+      const response = await doctorService.getUserDataForDoctor(userId);
+      setUserData(response);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Please try again later';
       toast({
-        title: 'Error fetching doctors',
+        title: 'Error fetching user data',
         description: errorMessage,
         status: 'error',
         duration: 3000,
@@ -117,23 +114,15 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
     }));
   };
 
-  const handleDoctorSelect = (doctor: Doctor) => {
-    setSelectedDoctor(doctor);
-    setFormData({
-      firstName: doctor.firstName,
-      lastName: doctor.lastName,
-      specialization: doctor.specialization,
-      yearsExperience: doctor.yearsExperience,
-      photoUrl: doctor.photoUrl || '',
-      bio: doctor.bio,
-      languages: doctor.languages,
-      consultationFee: doctor.consultationFee,
-      contactEmail: doctor.contactEmail,
-      contactPhone: doctor.contactPhone,
-      clinicAddress: doctor.clinicAddress,
-      location: doctor.location,
-      categoryId: doctor.category?.id || '',
-    });
+  const handleAddLanguage = () => {
+    if (languageInput.trim()) {
+      setFormData((prev) => ({ ...prev, languages: [...prev.languages, languageInput.trim()] }));
+      setLanguageInput('');
+    }
+  };
+
+  const handleRemoveLanguage = (lang: string) => {
+    setFormData((prev) => ({ ...prev, languages: prev.languages.filter((l) => l !== lang) }));
   };
 
   const handleSubmit = async () => {
@@ -143,27 +132,15 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
         throw new Error('Please select a category');
       }
 
-      if (selectedDoctor) {
-        // If a doctor is selected, use their data to create a new doctor profile
-        await doctorService.createDoctorFromUser(userId, {
-          firstName: selectedDoctor.firstName,
-          lastName: selectedDoctor.lastName,
-          specialization: selectedDoctor.specialization,
-          yearsExperience: selectedDoctor.yearsExperience,
-          photoUrl: selectedDoctor.photoUrl || '',
-          bio: selectedDoctor.bio,
-          languages: selectedDoctor.languages,
-          consultationFee: selectedDoctor.consultationFee,
-          contactEmail: selectedDoctor.contactEmail,
-          contactPhone: selectedDoctor.contactPhone,
-          clinicAddress: selectedDoctor.clinicAddress,
-          location: selectedDoctor.location,
-          categoryId: formData.categoryId,
-        });
-      } else {
-        // If no doctor is selected, create a new doctor from user
-        await doctorService.createDoctorFromUser(userId, formData);
-      }
+      await doctorService.createDoctorFromUser(userId, {
+        ...formData,
+        languages: formData.languages || [],
+        ...(formData.availableSlots.length > 0 && {
+          availableSlots: formData.availableSlots.map(slot => slot instanceof Date ? slot : new Date(slot))
+        }),
+        userId: userId,
+      });
+
       toast({
         title: 'Success',
         description: 'User has been assigned as a doctor',
@@ -193,158 +170,166 @@ export const AssignDoctorModal: React.FC<AssignDoctorModalProps> = ({
         <ModalHeader>Assign User as Doctor</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
-          <Tabs>
-            <TabList>
-              <Tab>Select Existing Doctor</Tab>
-              <Tab>Create New Doctor</Tab>
-            </TabList>
+          <VStack spacing={6} align="stretch">
+            {/* User Information Display */}
+            {userData && (
+              <Box p={4} borderWidth={1} borderRadius="md" bg="gray.50">
+                <Text fontWeight="bold" mb={2}>User Information (Auto-filled)</Text>
+                <HStack spacing={4} wrap="wrap">
+                  <Badge colorScheme="blue">Name: {userData.firstName} {userData.lastName}</Badge>
+                  <Badge colorScheme="green">Email: {userData.contactEmail}</Badge>
+                  {userData.city && <Badge colorScheme="purple">City: {userData.city}</Badge>}
+                </HStack>
+              </Box>
+            )}
 
-            <TabPanels>
-              <TabPanel>
-                <VStack spacing={4} align="stretch">
-                  <Select
-                    placeholder="Select a doctor"
-                    value={selectedDoctor?.id || ''}
-                    onChange={(e) => {
-                      const doctor = doctors.find(d => d.id === e.target.value);
-                      if (doctor) handleDoctorSelect(doctor);
-                    }}
-                  >
-                    {doctors.map((doctor) => (
-                      <option key={doctor.id} value={doctor.id}>
-                        {doctor.firstName} {doctor.lastName} - {doctor.specialization}
-                      </option>
-                    ))}
-                  </Select>
-                  {selectedDoctor && (
-                    <Box p={4} borderWidth={1} borderRadius="md">
-                      <Text fontWeight="bold">Selected Doctor Details:</Text>
-                      <Text>Name: {selectedDoctor.firstName} {selectedDoctor.lastName}</Text>
-                      <Text>Specialization: {selectedDoctor.specialization}</Text>
-                      <Text>Category: {selectedDoctor.category?.name || 'No category assigned'}</Text>
-                      <Text>Experience: {selectedDoctor.yearsExperience} years</Text>
-                    </Box>
-                  )}
-                  {selectedDoctor && (
-                    <FormControl isRequired>
-                      <FormLabel>Category</FormLabel>
-                      <Select
-                        name="categoryId"
-                        value={formData.categoryId}
-                        onChange={handleInputChange}
+            {/* Doctor-Specific Form */}
+            <VStack spacing={4} align="stretch">
+              <FormControl isRequired>
+                <FormLabel>Category</FormLabel>
+                <Select
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={handleInputChange}
+                  placeholder="Select category"
+                >
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Specialization</FormLabel>
+                <Input
+                  name="specialization"
+                  value={formData.specialization}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Cardiology, Pediatrics"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Years of Experience</FormLabel>
+                <NumberInput
+                  min={0}
+                  value={formData.yearsExperience}
+                  onChange={(value) => handleNumberInputChange('yearsExperience', Number(value))}
+                >
+                  <NumberInputField />
+                </NumberInput>
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Photo URL</FormLabel>
+                <Input
+                  name="photoUrl"
+                  value={formData.photoUrl}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/photo.jpg"
+                />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Bio</FormLabel>
+                <Textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  placeholder="Tell us about your medical background and expertise..."
+                  rows={4}
+                />
+              </FormControl>
+
+              <FormControl>
+                <FormLabel>Languages Spoken</FormLabel>
+                <HStack>
+                  <Input
+                    value={languageInput}
+                    onChange={(e) => setLanguageInput(e.target.value)}
+                    placeholder="Add language"
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddLanguage())}
+                  />
+                  <Button size="sm" onClick={handleAddLanguage}>Add</Button>
+                </HStack>
+                <HStack mt={2} wrap="wrap">
+                  {formData.languages.map((lang) => (
+                    <Badge key={lang} colorScheme="teal" p={2}>
+                      {lang}
+                      <Button
+                        size="xs"
+                        ml={2}
+                        colorScheme="red"
+                        variant="ghost"
+                        onClick={() => handleRemoveLanguage(lang)}
                       >
-                        <option value="">Select Category</option>
-                        {categories.map((category) => (
-                          <option key={category.id} value={category.id}>
-                            {category.name}
-                          </option>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  )}
-                </VStack>
-              </TabPanel>
+                        ×
+                      </Button>
+                    </Badge>
+                  ))}
+                </HStack>
+              </FormControl>
 
-              <TabPanel>
-                <VStack spacing={4}>
-                  <FormControl isRequired>
-                    <FormLabel>First Name</FormLabel>
-                    <Input
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Consultation Fee ($)</FormLabel>
+                <NumberInput
+                  min={0}
+                  value={formData.consultationFee}
+                  onChange={(value) => handleNumberInputChange('consultationFee', Number(value))}
+                >
+                  <NumberInputField />
+                </NumberInput>
+              </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel>Last Name</FormLabel>
-                    <Input
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Contact Phone</FormLabel>
+                <Input
+                  name="contactPhone"
+                  value={formData.contactPhone}
+                  onChange={handleInputChange}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel>Specialization</FormLabel>
-                    <Input
-                      name="specialization"
-                      value={formData.specialization}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Clinic Address</FormLabel>
+                <Input
+                  name="clinicAddress"
+                  value={formData.clinicAddress}
+                  onChange={handleInputChange}
+                  placeholder="123 Medical Center Dr, Suite 100"
+                />
+              </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel>Years of Experience</FormLabel>
-                    <NumberInput
-                      min={0}
-                      value={formData.yearsExperience}
-                      onChange={(value) => handleNumberInputChange('yearsExperience', Number(value))}
-                    >
-                      <NumberInputField />
-                    </NumberInput>
-                  </FormControl>
+              <FormControl isRequired>
+                <FormLabel>Location - Latitude</FormLabel>
+                <NumberInput
+                  value={formData.location.latitude}
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    location: { ...prev.location, latitude: Number(value) }
+                  }))}
+                  step="any"
+                >
+                  <NumberInputField />
+                </NumberInput>
+              </FormControl>
 
-                  <FormControl isRequired>
-                    <FormLabel>Photo URL</FormLabel>
-                    <Input
-                      name="photoUrl"
-                      value={formData.photoUrl}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Bio</FormLabel>
-                    <Textarea
-                      name="bio"
-                      value={formData.bio}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Consultation Fee</FormLabel>
-                    <NumberInput
-                      min={0}
-                      value={formData.consultationFee}
-                      onChange={(value) => handleNumberInputChange('consultationFee', Number(value))}
-                    >
-                      <NumberInputField />
-                    </NumberInput>
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Contact Email</FormLabel>
-                    <Input
-                      name="contactEmail"
-                      type="email"
-                      value={formData.contactEmail}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Contact Phone</FormLabel>
-                    <Input
-                      name="contactPhone"
-                      value={formData.contactPhone}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
-
-                  <FormControl isRequired>
-                    <FormLabel>Clinic Address</FormLabel>
-                    <Input
-                      name="clinicAddress"
-                      value={formData.clinicAddress}
-                      onChange={handleInputChange}
-                    />
-                  </FormControl>
-                </VStack>
-              </TabPanel>
-            </TabPanels>
-          </Tabs>
+              <FormControl isRequired>
+                <FormLabel>Location - Longitude</FormLabel>
+                <NumberInput
+                  value={formData.location.longitude}
+                  onChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    location: { ...prev.location, longitude: Number(value) }
+                  }))}
+                  step="any"
+                >
+                  <NumberInputField />
+                </NumberInput>
+              </FormControl>
+            </VStack>
+          </VStack>
         </ModalBody>
 
         <ModalFooter>

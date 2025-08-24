@@ -42,7 +42,8 @@ export const pharmacyService = {
 
   async getPharmacies(): Promise<Pharmacy[]> {
     const response = await api.get('/pharmacies');
-    return response.data;
+    // Handle the response format where data is wrapped in a 'pharmacies' property
+    return response.data.pharmacies || response.data || [];
   },
 
   async getPharmacyById(id: string): Promise<Pharmacy> {

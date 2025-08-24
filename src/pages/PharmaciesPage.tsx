@@ -25,10 +25,11 @@ const PharmaciesPage: React.FC = () => {
     const fetchPharmacies = async () => {
       try {
         const data = await pharmacyService.getPharmacies();
-        setPharmacies(data);
+        setPharmacies(Array.isArray(data) ? data : []);
       } catch (err) {
         setError('Failed to fetch pharmacies');
         console.error(err);
+        setPharmacies([]);
       } finally {
         setLoading(false);
       }
@@ -161,21 +162,29 @@ const PharmaciesPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {pharmacies.map((pharmacy) => (
-                <tr key={pharmacy.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.address}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.city || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactPhone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactEmail}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.openingHours}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{pharmacy.is24h ? 'Yes' : 'No'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <button className="text-blue-600 hover:underline mr-2" onClick={() => openEditModal(pharmacy)}>Edit</button>
-                    <button className="text-red-600 hover:underline" onClick={() => { setDeletePharmacyId(pharmacy.id); setShowDeleteConfirm(true); }}>Delete</button>
+              {Array.isArray(pharmacies) && pharmacies.length > 0 ? (
+                pharmacies.map((pharmacy) => (
+                  <tr key={pharmacy.id}>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.address}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.city || '-'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactPhone}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.contactEmail}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.openingHours}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">{pharmacy.is24h ? 'Yes' : 'No'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <button className="text-blue-600 hover:underline mr-2" onClick={() => openEditModal(pharmacy)}>Edit</button>
+                      <button className="text-red-600 hover:underline" onClick={() => { setDeletePharmacyId(pharmacy.id); setShowDeleteConfirm(true); }}>Delete</button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="px-6 py-4 text-center text-gray-500">
+                    No pharmacies found
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

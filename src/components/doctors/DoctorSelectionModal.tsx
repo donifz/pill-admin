@@ -48,7 +48,7 @@ export const DoctorSelectionModal: React.FC<DoctorSelectionModalProps> = ({
     try {
       setLoading(true);
       const [doctorsData, categoriesData] = await Promise.all([
-        doctorService.getDoctors(),
+        doctorService.getAllDoctors(),
         doctorService.getCategories(),
       ]);
       setDoctors(doctorsData);
